@@ -7,7 +7,7 @@ Along the course it will be explained the following topics:
 
 Introducing Backbone.js
 -----------------------
-	Overview 
+	Overview
 	What Is Backbone.js? 
 	Single Page Applications 
 	Why Do We Need Backbone.js? 
