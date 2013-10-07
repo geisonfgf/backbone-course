@@ -37,7 +37,7 @@ CREATE TABLE IF NOT EXISTS users (
 	url TEXT DEFAULT NULL,
 	description TEXT DEFAULT NULL,
 	created_at TEXT NOT NULL,
-	followers_count INT DEFAULT NULL,
-	friends_count INT DEFAULT NULL,
+	followers_count INT AUTOINCREMENT,
+	friends_count INT AUTOINCREMENT,
 	CONSTRAINT PK_user PRIMARY KEY (user_id ASC)
 )
