@@ -6,7 +6,7 @@ CREATE TABLE IF NOT EXISTS tweets (
 	screen_name TEXT NOT NULL,
 	name TEXT DEFAULT NULL,
 	profile_image_url TEXT DEFAULT NULL,
-	CONSTRAINT PK_tweets PRIMARY KEY (id ASC)
+	CONSTRAINT PK_tweets PRIMARY KEY (tweet_id ASC)
 );
 
 CREATE TABLE IF NOT EXISTS tweet_mentions (
@@ -25,7 +25,7 @@ CREATE TABLE IF NOT EXISTS tweet_tags (
 CREATE TABLE IF NOT EXISTS tweet_urls (
 	tweet_url_id INT NOT NULL,
 	url TEXT NOT NULL,
-	CONSTRAINT PK_user PRIMARY KEY (tweet_tag_id ASC)
+	CONSTRAINT PK_user PRIMARY KEY (tweet_url_id ASC)
 );
 
 CREATE TABLE IF NOT EXISTS users (
@@ -37,7 +37,7 @@ CREATE TABLE IF NOT EXISTS users (
 	url TEXT DEFAULT NULL,
 	description TEXT DEFAULT NULL,
 	created_at TEXT NOT NULL,
-	followers_count INT AUTOINCREMENT,
-	friends_count INT AUTOINCREMENT,
+	followers_count INT DEFAULT NULL,
+	friends_count INT DEFAULT NULL,
 	CONSTRAINT PK_user PRIMARY KEY (user_id ASC)
 )
