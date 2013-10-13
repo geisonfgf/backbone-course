@@ -121,31 +121,29 @@ app.get('/hp/v0.1/backbone/api/users/:id', function (req, res) {
 // api url user - hp/v0.1/backbone/api/users (POST)
 app.post('/hp/v0.1/backbone/api/users', function (req, res) {
 	console.log("Called create user");
-	var user = {
-		user_id: null,
-		screen_name: req.body.screen_name,
-		name: req.body.name,
-		profile_image_url: req.body.profile_image_url,
-		email: req.body.email,
-		url: req.body.url,
-		description: req.body.description,
-		followers_count: null,
-		friends_count: null,
-		created_at: new Date()
-	}
+	console.log(req.body);
+	var user = [
+		req.body.screen_name,
+		req.body.name,
+		req.body.profile_image_url,
+		req.body.email,
+		req.body.url,
+		req.body.description,
+		new Date(),
+		0,
+		0
+	];
+
 	db.serialize(function() {
-		var sql = "INSERT INTO users VALUES(" +
-			"$user_id, $screen_name, $name, $profile_image_url, " +
-			"$url, $description, $followers_count, $friends_count, " +
-			"$created_at)";
+		var sql = "INSERT INTO users (screen_name, name, " +
+			"profile_image_url, email, url, description, " +
+			"created_at, followers_count, friends_count ) " +
+			"VALUES( ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 		db.run(sql, user, function(err, row){
 			if(err){
 				console.log(err);
 				res.status(500);
 				res.send({ error: '500: Internal Server Error' });
-			}else if(typeof row == 'undefined'){
-				res.status(404);
-				res.send({ error: 'Not found' });
 			}else{
 				res.status(200);
 				res.send(row);
@@ -157,44 +155,29 @@ app.post('/hp/v0.1/backbone/api/users', function (req, res) {
 // api url user - hp/v0.1/backbone/api/users/:id (PUT)
 app.put('/hp/v0.1/backbone/api/users/:id', function (req, res) {
 	console.log("Called update user by id");
+	console.log(req.body);
 	var id = req.params.id;
 	var fields = "";
 	var user = [];
-
-	if(req.body.screen_name){
-		fields + "screen_name=?";
-		user.push(req.body.screen_name);
+	var field;
+	var comma = "";
+	
+	for(field in req.body){
+		if(fields != "") comma = ", ";
+		fields = fields + comma + field + "=? ";
+		user.push(req.body[field]);
 	}
-	if(req.body.name){
-		fields + "name=?";
-		user.push(req.body.name);
-	}
-	if(req.body.profile_image_url){
-		fields + "profile_image_url=?";
-		user.push(req.body.profile_image_url);
-	}
-	if(req.body.email){
-		fields + "email=?";
-		user.push(req.body.email);
-	}
-	if(req.body.url){
-		fields + "url=?";
-		user.push(req.body.url);
-	}
-	if(req.body.description){
-		fields + "description=?";
-		user.push(req.body.description);
-	}
+	
+	user.push(id);
 
 	db.serialize(function() {
-		db.run("UPDATE users SET " + fields, user, function(err, row){
+		var sql = "UPDATE users SET " + fields + "WHERE user_id = ?";
+		console.log(sql);
+		db.run(sql, user, function(err, row){
 			if(err){
 				console.log(err);
 				res.status(500);
 				res.send({ error: '500: Internal Server Error' });
-			}else if(typeof row == 'undefined'){
-				res.status(404);
-				res.send({ error: 'Not found' });
 			}else{
 				res.status(200);
 				res.send(row);
@@ -207,7 +190,49 @@ app.put('/hp/v0.1/backbone/api/users/:id', function (req, res) {
 app.delete('/hp/v0.1/backbone/api/users/:id', function (req, res) {
 	console.log("Called delete user by id");
 	db.serialize(function() {
-		db.get("DELETE FROM users WHERE user_id = ?", req.params.id, function(err, row){
+		var sql = "DELETE FROM users WHERE user_id = ?";
+		db.get(sql, req.params.id, function(err, row){
+			if(err){
+				console.log(err);
+				res.status(500);
+				res.send({ error: '500: Internal Server Error' });
+			}else{
+				res.status(200);
+				res.send(row);
+			}
+		});
+	});
+});
+
+/***************************************************************************/
+/** TWEETS ENTRYPOINT ********************************************************/
+/***************************************************************************/
+
+// api url tweets - hp/v0.1/backbone/api/tweets (GET)
+app.get('/hp/v0.1/backbone/api/tweets', function (req, res) {
+	console.log("Called get all tweets");
+	db.serialize(function() {
+		db.all("SELECT * FROM tweets", function(err, rows){
+			if(err){
+				console.log(err);
+				res.status(500);
+				res.send({ error: '500: Internal Server Error' });
+			}else if(typeof rows == 'undefined' && rows.length <= 0){
+				res.status(404);
+				res.send({ error: 'Not found' });
+			}else{
+				res.status(200);
+				res.send(rows);
+			}
+		});
+	});
+});
+
+// api url tweets - hp/v0.1/backbone/api/tweets/:id (GET)
+app.get('/hp/v0.1/backbone/api/tweets/:id', function (req, res) {
+	console.log("Called get tweet by id");
+	db.serialize(function() {
+		db.get("SELECT * FROM tweets WHERE tweet_id = ?", req.params.id, function(err, row){
 			if(err){
 				console.log(err);
 				res.status(500);
@@ -215,6 +240,88 @@ app.delete('/hp/v0.1/backbone/api/users/:id', function (req, res) {
 			}else if(typeof row == 'undefined'){
 				res.status(404);
 				res.send({ error: 'Not found' });
+			}else{
+				res.status(200);
+				res.send(row);
+			}
+		});
+	});
+});
+
+// api url user - hp/v0.1/backbone/api/tweets (POST)
+app.post('/hp/v0.1/backbone/api/tweets', function (req, res) {
+	console.log("Called create tweet");
+	console.log(req.body);
+	var user = [
+		req.body.tweet_text,
+		new Date(),
+		req.body.user_id,
+		req.body.screen_name,
+		req.body.name,
+		req.body.profile_image_url
+	];
+
+	db.serialize(function() {
+		var sql = "INSERT INTO tweets (tweet_text, user_id, " +
+			"screen_name, name, profile_image_url ) " +
+			"VALUES( ?, ?, ?, ?, ?)";
+		db.run(sql, user, function(err, row){
+			if(err){
+				console.log(err);
+				res.status(500);
+				res.send({ error: '500: Internal Server Error' });
+			}else{
+				res.status(200);
+				res.send(row);
+			}
+		});
+	});
+});
+
+// api url tweets - hp/v0.1/backbone/api/tweets/:id (PUT)
+app.put('/hp/v0.1/backbone/api/tweets/:id', function (req, res) {
+	console.log("Called update tweet by id");
+	console.log(req.body);
+	var id = req.params.id;
+	var fields = "";
+	var tweet = [];
+	var field;
+	var comma = "";
+	
+	for(field in req.body){
+		if(fields != "") comma = ", ";
+		fields = fields + comma + field + "=? ";
+		user.push(req.body[field]);
+	}
+	
+	user.push(id);
+
+	db.serialize(function() {
+		var sql = "UPDATE tweets SET " + fields + "WHERE tweet_id = ?";
+		console.log(sql);
+		db.run(sql, user, function(err, row){
+			if(err){
+				console.log(err);
+				res.status(500);
+				res.send({ error: '500: Internal Server Error' });
+			}else{
+				res.status(200);
+				res.send(row);
+			}
+		});
+	});
+});
+
+// api url tweets - hp/v0.1/backbone/api/tweets/:id (DELETE)
+app.delete('/hp/v0.1/backbone/api/tweets/:id', function (req, res) {
+	console.log("Called delete tweet by id");
+	db.serialize(function() {
+		var sql = "DELETE FROM tweets WHERE tweet_id = ?";
+		db.get(sql, req.params.id, function(err, row){
+			if(err){
+				console.log(err);
+				res.status(500);
+				res.send({ error: '500: Internal Server Error' });
 			}else{
 				res.status(200);
 				res.send(row);
